@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ name }} | Портфолио</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<nav class="nav">
+    <div class="container">
+        <a href="#home" style="font-weight: bold;">{{ name.split()[0] }}</a>
+        <div>
+            <a href="#work">Проекты</a>
+            <a href="#skills">Стек</a>
+            <a href="#contact">Контакты</a>
+            <a href="/admin">⚙️</a>
+        </div>
+    </div>
+</nav>
+
+<section id="home" class="hero">
+    <div class="container">
+        <h1>{{ name }}</h1>
+        <div class="title">{{ title }}</div>
+        <div class="bio">{{ bio_html|safe }}</div>
+        <p><i class="fas fa-map-marker-alt"></i> {{ location }} | <i class="fas fa-briefcase"></i> {{ experience }}</p>
+        <a href="#work" class="btn">Проекты →</a>
+    </div>
+</section>
+
+<section id="work">
+    <div class="container">
+        <h2 class="section-title">Проекты</h2>
+        {% for project in projects %}
+        <div class="project-card">
+           <div class="image-placeholder">
+                <img src="{{ url_for('static', filename='images/' + project.image) }}" alt="{{ project.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div class="project-details">
+                <h3 class="project-title">{{ project.title }}</h3>
+                <p class="project-description">{{ project.description }}</p>
+                <div class="project-tech">
+                    {% for tech in project.tech %}
+                    <span class="tech-tag">{{ tech }}</span>
+                    {% endfor %}
+                </div>
+                <a href="{{ project.link }}" class="project-link" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section id="skills">
+    <div class="container">
+        <h2 class="section-title">Стек технологий</h2>
+        {% for skill in skills %}
+        <div class="skill-item">
+            <span class="skill-name">{{ skill.name }}</span>
+            <div class="skill-bar">
+                <div class="skill-progress" style="width: {{ skill.percent }}%;">{{ skill.percent }}%</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section id="contact">
+    <div class="container">
+        <h2 class="section-title">Контакты</h2>
+        <div class="contact-grid">
+            <a href="{{ github }}" class="contact-card"><i class="fab fa-github"></i> GitHub</a>
+            <a href="{{ kwork }}" class="contact-card"><i class="fab fa-kickstarter-k"></i> Kwork</a>
+            <a href="tel:{{ phone }}" class="contact-card"><i class="fas fa-phone"></i> {{ phone }}</a>
+            <a href="mailto:{{ email }}" class="contact-card"><i class="fas fa-envelope"></i> {{ email }}</a>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container">
+        <p>© {{ name }} — {{ title }}</p>
+    </div>
+</footer>
+
+<script>
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+</script>
+</body>
+</html>
