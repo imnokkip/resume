@@ -21,6 +21,11 @@
                 <a href="/admin" class="admin-link" target="_blank">
                     <i class="fas fa-cog"></i>
                 </a>
+                {% if session.logged_in %}
+                <a href="/logout" class="admin-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+                {% endif %}
             </div>
         </div>
     </nav>

@@ -1,20 +1,37 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.utils import secure_filename
+from functools import wraps
 import markdown
 import json
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'key'
+app.secret_key = os.environ.get('SECRET_KEY', '0')
 
-# Настройки загрузки картинок
+
 UPLOAD_FOLDER = './resume/static/images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash('Пожалуйста, войдите в систему', 'error')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 DATA_FILE = './data/projects.json'
 os.makedirs('data', exist_ok=True)
@@ -72,7 +89,32 @@ def index():
     data['bio_html'] = markdown.markdown(data['bio'])
     return render_template('index.html', **data)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if session.get('logged_in'):
+        return redirect(url_for('admin'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['logged_in'] = True
+            flash('Вы успешно вошли в систему!', 'success')
+            return redirect(url_for('admin'))
+        else:
+            flash('Неверное имя пользователя или пароль', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash('Вы вышли из системы', 'success')
+    return redirect(url_for('index'))
+
 @app.route('/admin', methods=['GET', 'POST'])
+@login_required
 def admin():
     data = load_data()
     
@@ -99,7 +141,6 @@ def admin():
             flash('Сохранено!')
             
         elif action == 'add_project':
-            # Обработка картинки
             image_name = 'default.jpg'
             if 'image' in request.files:
                 file = request.files['image']
@@ -121,7 +162,6 @@ def admin():
             
         elif action == 'delete_project':
             pid = int(request.form.get('project_id'))
-            # Удаляем картинку проекта
             for p in data['projects']:
                 if p['id'] == pid and p['image'] != 'default.jpg':
                     img_path = os.path.join(app.config['UPLOAD_FOLDER'], p['image'])
@@ -139,16 +179,13 @@ def admin():
                     p['tech'] = [t.strip() for t in request.form.get('tech', '').split(',') if t.strip()]
                     p['link'] = request.form.get('link', '#')
                     
-                    # Обновляем картинку если загрузили новую
                     if 'image' in request.files:
                         file = request.files['image']
                         if file and allowed_file(file.filename):
-                            # Удаляем старую картинку
                             if p['image'] != 'default.jpg':
                                 old_img = os.path.join(app.config['UPLOAD_FOLDER'], p['image'])
                                 if os.path.exists(old_img):
                                     os.remove(old_img)
-                            # Сохраняем новую
                             filename = secure_filename(file.filename)
                             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                             p['image'] = filename
