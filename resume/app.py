@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.secret_key = 'key'
 
 # Настройки загрузки картинок
-UPLOAD_FOLDER = 'static/images'
+UPLOAD_FOLDER = './resume/static/images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
